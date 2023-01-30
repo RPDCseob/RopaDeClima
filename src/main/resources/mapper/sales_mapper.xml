@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC   "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+<mapper namespace="com.tmtm.sales.SalesDAO">
+	<select id="getSec" resultType="sales">
+		select section_num from section where floor = #{param1} order by section_num;
+	</select>
+	<select id="getStore" resultType="sales">
+		select store_num, store_name from store where section_num = #{param1} and exist_check = 1;
+	</select>
+	<select id="getSecGraph" parameterType="hashmap" resultType="hashmap">
+		<choose>
+			<when test="time.equals('date')">
+			select date(doc_date) as date, sum(sales_money) as sum
+			from doc_sales 
+			where section_num = #{sec} and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+			group by date;	
+			</when>
+			<when test="time.equals('week')">
+			SELECT DATE_FORMAT(DATE_SUB(`doc_date`, INTERVAL (DAYOFWEEK(`doc_date`)-1) DAY), '%Y/%m/%d') as start,
+       		DATE_FORMAT(DATE_SUB(`doc_date`, INTERVAL (DAYOFWEEK(`doc_date`)-7) DAY), '%Y/%m/%d') as end,
+       		DATE_FORMAT(`doc_date`, '%Y년 %U번째 주') as `date`, 
+       		sum(`sales_money`) as sum
+  			FROM doc_sales
+  			where section_num = #{sec}  and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+ 			GROUP BY date;
+ 			<!-- %U : 주 시작 일요일 -->
+ 			<!-- %u : 주 시작 월요일 -->
+			</when>
+			<when test="time.equals('month')">
+			SELECT DATE_FORMAT(`doc_date`, '%Y년 %c월') as date, 
+		    sum(`sales_money`) as sum
+		  	FROM doc_sales	
+		  	where section_num = #{sec} and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+		 	GROUP BY `date` 
+		 	order by doc_date;
+			</when>
+			<when test="time.equals('year')">
+			SELECT DATE_FORMAT(`doc_date`, '%Y년') as date, 
+			sum(`sales_money`) as sum
+			FROM doc_sales 
+			where section_num = #{sec} and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+			GROUP BY DATE_FORMAT(`doc_date`, '%Y');
+			</when>
+		</choose>
+	</select>
+	<select id="getStoreGraph" parameterType="hashmap" resultType="hashmap">
+		<choose>
+			<when test="time.equals('date')">
+			select date(doc_date) as date, sum(sales_money) as sum
+			from doc_sales 
+			where store_num = #{store} and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+			group by date;	
+			</when>
+			<when test="time.equals('week')">
+			SELECT DATE_FORMAT(DATE_SUB(`doc_date`, INTERVAL (DAYOFWEEK(`doc_date`)-1) DAY), '%Y/%m/%d') as start,
+       		DATE_FORMAT(DATE_SUB(`doc_date`, INTERVAL (DAYOFWEEK(`doc_date`)-7) DAY), '%Y/%m/%d') as end,
+       		DATE_FORMAT(`doc_date`, '%Y년 %U번째 주') as `date`, 
+       		sum(`sales_money`) as sum
+  			FROM doc_sales
+  			where store_num = #{store} and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+ 			GROUP BY date;
+			</when>
+			<when test="time.equals('month')">
+			SELECT DATE_FORMAT(`doc_date`, '%Y년 %c월') as date, 
+		    sum(`sales_money`) as sum
+		  	FROM doc_sales	
+		  	where store_num = #{store} and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+		 	GROUP BY `date` 
+		 	order by doc_date;
+			</when>
+			<when test="time.equals('year')">
+			SELECT DATE_FORMAT(`doc_date`, '%Y년') as date, 
+			sum(`sales_money`) as sum
+			FROM doc_sales 
+			where store_num = #{store} and doc_date BETWEEN #{start} and #{end} and is_signed = 1
+			GROUP BY DATE_FORMAT(`doc_date`, '%Y');
+			</when>
+		</choose>
+	</select>
+	<select id="getCurStd" resultType="String">
+		select standard from special order by stand_date desc limit 1;
+	</select>
+	<insert id="regStd">
+		insert into special(standard) values(#{param1});
+	</insert>
+	<select id="totalCount" resultType="int">
+		select count(*) from special_log
+	</select>
+	<select id="specialList" resultType="sales">
+		select sl.special_pk, s.store_num, s.store_name,write_date, standard , sale_inc 
+		from special_log sl, store s 
+		where sl.store_id = s.store_num 
+		order by write_date desc 
+		limit 10 
+		offset #{param1}
+	</select>
+	<select id="specialDetail" resultType="sales">
+		select sl.special_pk, s.store_num, s.store_name, write_date, standard , sale_inc 
+		from special_log sl, store s 
+		where sl.store_id = s.store_num and special_pk = #{param1}
+	</select>
+	<select id="specialEvent" resultType="sales">
+		select d.doc_num, d.doc_sub, b.store_num, b.event_start, b.event_finish
+		from doc d join 
+		(SELECT doc_num, store_num, event_start, event_finish, write_date 
+		from event_log el join special_log sl on el.store_num = sl.store_id 
+		where sl.special_pk = #{param1} and is_signed = 1) as b
+		on d.doc_num = b.doc_num
+		where write_date BETWEEN b.event_start and b.event_finish
+		order by event_start desc;
+	</select>
+	<select id="detailCount" resultType="int">
+		select count(*)
+		from special_log sl, store s 
+		where sl.store_id = s.store_num and s.store_name like #{param1}
+	</select>
+	<select id="detailSearch" resultType="sales">
+		select sl.special_pk, s.store_num, s.store_name,write_date, standard , sale_inc 
+		from special_log sl, store s 
+		where sl.store_id = s.store_num and s.store_name like #{param2}
+		order by write_date desc 
+		limit 10 
+		offset #{param1}
+	</select>
+</mapper>

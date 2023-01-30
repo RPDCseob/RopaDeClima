@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC   "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+<mapper namespace="com.tmtm.main.MainDAO">
+	<select id="thisMonthGraph" resultType="hashmap">
+		select doc_date, sum(sales_money) as sales 
+		from doc_sales where is_signed = 1 and DATE_FORMAT(doc_date, '%Y-%m') = #{param1} 
+		group by doc_date;
+	</select>
+	<select id="">
+	
+	</select>
+	<select id="monthAvg" resultType="double">
+		 SELECT avg(sales_money) as avg 
+		 from doc_sales ds 
+		 where is_signed = 1 and DATE_FORMAT(doc_date, '%Y-%m') = #{param1}
+	</select>
+	<select id="getDocInfoSeq" resultType="int">
+		SELECT count(d.doc_num) 
+	   from employee e, doc d , doc_line dl, doc_sort ds 
+	    where d.emp_num = e.emp_num 
+	    and d.doc_state_num = 1
+	    and ds.doc_sort_num = d.doc_sort_num 
+	    and d.doc_num = dl.doc_num 
+	    and dl.doc_line_ref = FALSE 
+	    and dl.doc_line_chk = FALSE 
+	    and dl.doc_sign = true 
+	    and dl.emp_num =#{param1};
+	</select>
+	<select id="getDocInfoWait" resultType="int">
+		select count(*) from doc d where emp_num = #{param1} and doc_state_num = 1;
+	</select>
+	<select id="getSchedule" resultType="hashmap">
+		select s.sch_num as sch_num, s.sch_content as 'content', ss.sch_sort_name as 'sort' from schedule s, schedule_sort ss  
+		where act = 1 and team_num = #{param1}
+		and #{param2} BETWEEN DATE_FORMAT(sch_start, '%Y-%m-%d') 
+		and DATE_FORMAT(sch_end, '%Y-%m-%d')
+		and ss.sch_sort_num = s.sch_sort;
+	</select>
+	<select id="getFac" resultType="hashmap">
+		SELECT fb.book_num, fb.fac_num, fb.emp_num, DATE_FORMAT(fb.book_start, '%H:%i') as book_start, DATE_FORMAT(fb.book_end, '%H:%i') as book_end, f.fac_name  from fac_book fb inner join fac f 
+		on fb.fac_num = f.fac_num 
+		where act = 1 and #{param2} BETWEEN DATE_FORMAT(book_start, '%Y-%m-%d') and DATE_FORMAT(book_end, '%Y-%m-%d')
+		and book_num in (SELECT book_num from fac_book_league where emp_num = #{param1});
+	</select>
+</mapper>

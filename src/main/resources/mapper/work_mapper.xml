@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC   "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+<mapper namespace="com.tmtm.work.WorkDAO">
+	<select id="workListCount" resultType="int">
+		select count(*) from work_attd where emp_num = #{param1}
+	</select>
+	<select id="workList" resultType="hashmap">
+		select DATE_FORMAT(attendance_time, '%Y-%m-%d') as date, 
+		DATE_FORMAT(attendance_time, '%T') as attend, 
+		DATE_FORMAT(quitting_time , '%T') as quit, 
+		work_type
+		from work_attd 
+		where emp_num = #{param1}
+		order by attendance_time desc 
+		limit 15 offset #{param2}
+	</select>
+	<select id="showMonthWork" parameterType="String" resultType="hashmap">
+		select count(*) as 'work_date', sum(TIMESTAMPDIFF(hour, attendance_time, quitting_time)) as 'total_time'
+		from work_attd 
+		where emp_num = #{param2} and work_type != '결근' and DATE_FORMAT(attendance_time,'%Y-%m') = #{param1}
+	</select>
+	<select id="showMonthAttend" resultType="hashmap">
+		SELECT 
+		(select count(*) 
+		from work_attd 
+		where work_type = '지각' and emp_num = #{param2}) as 'late',
+		(select count(*)
+		from work_attd 
+		where work_type = '결근' and emp_num = #{param2}) as 'absence',
+		(select count(*)
+		from work_attd 
+		where work_type = '휴가' and emp_num = #{param2}) as 'vacation',
+		(select count(*)
+		from work_attd
+		where work_type = '출장' and emp_num = #{param2}) as 'travel'
+		from work_attd
+		WHERE DATE_FORMAT(attendance_time,'%Y-%m') = #{param1} 
+		group by DATE_FORMAT(attendance_time,'%Y-%m');
+	</select>
+	<select id="btnHiCheck" resultType="int" parameterType="String">
+		select count(*) from work_attd where DATE_FORMAT(attendance_time,'%Y-%m-%d') = #{nowTime} and emp_num = #{loginId};
+	</select>
+	<select id="btnByeCheck" resultType="int" parameterType="String">
+		select count(*) from work_attd where DATE_FORMAT(quitting_time,'%Y-%m-%d') = #{nowTime} and emp_num = #{loginId};
+	</select>
+	<insert id="hiCheck" parameterType="String">
+		insert into work_attd(emp_num, work_type, attendance_time) values(#{loginId},#{work_type},#{nowTime});
+	</insert>
+	<update id="byeCheck">
+		update work_attd set quitting_time = #{param1}
+		where DATE_FORMAT(attendance_time, '%Y-%m-%d') = DATE_FORMAT(#{param1}, '%Y-%m-%d')
+	</update>
+</mapper>

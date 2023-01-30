@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC   "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+
+<mapper namespace="com.tmtm.fac.FacDAO">
+
+	<select id="facList" resultType="fac">
+		select f.new_filename, a.fac_num, a.fac_name, b.book_num 
+		from 
+		(select new_filename, all_num from file fl where file_sort_num = 3) as f
+		left join
+		((select f.fac_num, f.fac_name from fac f where fac_state != 3) as a
+		left join 
+		(select * from fac_book fb where #{param1} BETWEEN book_start and book_end and act = 1) as b 
+		on a.fac_num = b.fac_num)
+		on f.all_num = a.fac_num;
+	</select>
+	
+	<select id="modFac" resultType="fac">
+		SELECT fac_name FROM fac WHERE fac_num = #{param1}
+	</select>
+	
+
+	
+	<select id="select" resultType="fac">
+		SELECT fac_name,fac_num FROM fac
+	</select>
+	
+	
+	
+	<select id="book" resultType="fac">
+		SELECT book_num FROM fac_book
+	</select>
+	
+	<select id="part" resultType="fac">
+		SELECT * FROM departure
+	</select>
+	
+	<select id="team" resultType="fac">
+		SELECT t.team_num ,t.team_name FROM departure d ,team t
+			WHERE t.dep_num = #{param1} 
+			AND t.dep_num = d.dep_num	 
+	</select>
+
+	<select id="emp" resultType="fac">
+		SELECT * FROM employee e, team t, departure d 
+		WHERE e.team_num = #{param1} 
+		AND t.dep_num = d.dep_num
+		AND e.team_num = t.team_num
+	</select>
+	
+	<select id="teamList" resultType="fac">
+		SELECT * FROM team WHERE dep_num=#{param1} 
+	</select>
+	
+	
+	
+	<insert id="regList" parameterType="fac"
+		useGeneratedKeys="true" keyColumn="book_num" keyProperty="book_num">
+		INSERT into fac_book (fac_num,emp_num, book_start, book_end, act)
+				values (#{fac_num}, #{emp_num}, #{book_start}, #{book_end}, 1)
+	</insert> 
+	
+	
+	
+	<insert id="bookMem">
+		INSERT INTO fac_book_league (book_num, emp_num)
+			VALUES (#{param1}, #{param2})
+	</insert>
+	
+	
+	
+	<select id="bookList" resultType="fac">
+		SELECT * FROM fac_book fb, fac f, fac_book_league fbl  
+		WHERE fb.fac_num = f.fac_num
+		AND fb.book_num = fbl.book_num 
+		AND fb.act = true
+		AND f.fac_state != 3
+		GROUP BY fb.book_num
+	</select>
+	
+	<select id="detail" resultType="fac">
+		SELECT * FROM fac_book WHERE emp_num = #{param1}
+	</select>
+	
+	<select id="myBook" resultType="fac">
+		SELECT * FROM fac_book fb, fac f  
+			WHERE book_start BETWEEN #{param1} AND #{param2}
+			AND fb.act = TRUE 
+			AND fb.fac_num = f.fac_num
+			AND fb.emp_num = #{param3}
+	</select>
+	
+	<select id="checkTime" resultType="int">
+		select count(*) from fac_book 	
+				where fac_num = #{param1} and <![CDATA[book_start >= #{param2} and book_end <= #{param3}]]>
+	</select>
+	
+	<select id="modalList" resultType="fac">
+		SELECT * FROM fac_book fb, fac f, fac_book_league fbl
+			WHERE fb.book_num = fbl.book_num
+			AND fb.book_num = #{param}
+			AND fb.act = TRUE 
+			AND fb.fac_num = f.fac_num
+	</select>
+	
+	<update id="update">
+	UPDATE fac_book 
+		SET 
+		fac_num = #{fac_num},
+		book_start = #{book_start}, 
+		book_end = #{book_end} 
+		WHERE book_num = #{book_num}
+		AND emp_num = #{emp_num}
+	</update>
+	
+	<update id="memUpdate">
+		UPDATE fac_book_league 
+			SET 
+			emp_num = #{param1}
+			WHERE 	book_num = #{param2}
+	</update>
+	
+	<update id="delete">
+		UPDATE fac_book 
+			SET
+			act = FALSE 
+			WHERE book_num = #{param1}
+			AND
+			emp_num = #{param2}
+	</update>
+	
+	<select id="emp_num" resultType="fac">
+		SELECT emp_num FROM fac_book;
+	</select>
+	
+	<select id="overlap" resultType="fac">
+		SELECT book_start, book_end FROM fac_book
+	</select>
+	
+	<select id="nameList" resultType="fac">
+		SELECT * FROM fac WHERE fac_num=#{param1}
+	</select>
+	
+	
+</mapper>

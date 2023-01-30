@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC   "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+
+<mapper namespace="com.tmtm.fac.FacManageDAO">
+
+
+	<select id="facList" resultType="facManage">
+		SELECT * FROM fac f,file f2, employee e  
+			WHERE f.fac_num = f2.all_num 
+			AND f.emp_num = e.emp_num
+			AND f.fac_state != 3
+		
+		
+	</select>
+	
+	
+	
+	
+	<select id="empChoice" resultType="facManage">
+		SELECT * FROM employee e, authority a 
+			WHERE e.emp_num = a.emp_num 
+			AND a.auth_num = 6
+	</select>
+	
+	
+	<insert id="register" parameterType="facManage" useGeneratedKeys="true"
+	keyColumn="fac_num" keyProperty="fac_num">
+		INSERT INTO fac (fac_name, emp_num, fac_state, color) VALUES (#{fac_name}, #{emp_num},1, #{color})
+	</insert>
+	
+	<insert id="fileInsert" parameterType="facManage">
+		INSERT INTO file(all_num, file_sort_num, ori_filename, new_filename) 
+			VALUES (#{all_num}, 3, #{ori_filename}, #{new_filename})
+	</insert>
+	
+	<select id="nameChk" resultType="int">
+		SELECT COUNT(*) FROM fac f  WHERE fac_name = #{param2} AND fac_num != #{param1}
+	</select>
+	
+	<update id="update" parameterType="facManage">
+		UPDATE fac  
+			SET 
+			fac_name  = #{fac_name},
+			emp_num  = #{emp_num},
+			color = #{color}
+			WHERE fac_num  = #{fac_num}
+	</update>
+
+	<update id="fileUpdate" parameterType="String">
+		UPDATE file  
+			SET 
+			ori_filename  = #{ori_filename},
+			new_filename  = #{new_filename}
+			WHERE all_num  = #{fac_num}
+	</update>
+	
+	<update id="delete">
+		UPDATE fac
+			SET
+			fac_state = 3
+			WHERE 
+			fac_num = #{param1}			
+	</update>
+	
+	<update id="bookDel">
+		UPDATE fac_book SET act = 0 WHERE fac_num = #{param1}
+	</update>
+
+	
+
+	
+	
+
+
+
+
+
+
+
+</mapper>

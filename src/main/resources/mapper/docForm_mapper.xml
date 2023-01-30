@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC   "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+<mapper namespace="com.tmtm.doc.DocFormDAO">
+
+	<insert id="docFormWrite">
+		insert into doc_form (doc_sort_num, emp_num,
+		form_style,
+		form_title)values(#{param4},#{param3},#{param2},#{param1});
+	</insert>
+
+	<select id="docFormList" resultType="docForm">
+		select
+		*
+		from doc_form df, doc_sort ds, employee e
+		where df.emp_num = e.emp_num and df.doc_sort_num=ds.doc_sort_num
+		and act=true
+		<if test="sort.equals('')"></if> 
+		<if test="!sort.equals('')">
+			and df.doc_sort_num = #{param1}
+		</if> 
+		<if test="keyword.equals('')"></if> 
+		<if test="!keyword.equals('')">
+			and ${param4} like CONCAT('%',#{param2},'%')
+		</if> 
+		 order by form_num DESC limit 10
+		offset #{param3}
+		;
+	</select>
+
+	<select id="docFormListCnt" resultType="integer">
+		select count(form_num) from doc_form df, employee e where df.emp_num = e.emp_num and df.act=true
+				<if test="sort.equals('')"></if> 
+		<if test="!sort.equals('')">
+			and doc_sort_num = #{param1}
+		</if> 
+		<if test="keyword.equals('')"></if> 
+		<if test="!keyword.equals('')">
+			and ${param3} like CONCAT('%',#{param2},'%')
+		</if> 
+	;
+	</select>
+
+	<select id="getDocFormDetail" resultType="docForm">
+		select *
+		from doc_form df, doc_sort ds, employee e
+		where df.emp_num = e.emp_num and df.doc_sort_num=ds.doc_sort_num and
+		df.form_num = #{param1};
+	</select>
+
+	<select id="update">
+
+		update doc_form set doc_sort_num=#{param2} , form_title=#{param3}, form_style=#{param4} where
+		form_num=#{param1}
+
+	</select>
+
+<select id="delete">
+
+		update doc_form set act=false where
+		form_num=#{param1}
+
+	</select>
+
+
+</mapper>
